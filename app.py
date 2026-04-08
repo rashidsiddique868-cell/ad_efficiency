@@ -159,7 +159,7 @@ def train_step():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    data     = request.get_json(silent=True) or {}
+    data     = request.get_json(force=True, silent=True) or {}
     age      = float(data["age"])      / 100
     tech     = float(data["tech"])     / 100
     shopping = float(data["shopping"]) / 100
@@ -312,7 +312,7 @@ def segment_reset():
 
 @app.route("/roi", methods=["POST"])
 def roi():
-    data     = request.get_json(silent=True) or {}
+    data     = request.get_json(force=True, silent=True) or {}
     users    = int(data["users"])
     budget   = float(data["budget"])
     ai_acc   = state["accuracy"] / 100 if state["accuracy"] > 0 else 0.77
@@ -339,7 +339,7 @@ def roi():
 
 @app.route("/journey_step", methods=["POST"])
 def journey_step():
-    data    = request.get_json(silent=True) or {}
+    data    = request.get_json(force=True, silent=True) or {}
     history = data.get("history", [])
 
     age      = round(np.random.uniform(0.1, 0.9), 2)
@@ -404,7 +404,7 @@ def health():
 
 @app.route("/reset", methods=["POST"])
 def env_reset():
-    data       = request.get_json(silent=True) or {} or {}
+    data       = request.get_json(force=True, silent=True) or {}
     task       = data.get("task", "easy")
     session_id = data.get("session_id", "default")
     env        = AdAuctionEnvironment(task_level=task)
@@ -417,7 +417,7 @@ def env_reset():
 
 @app.route("/step", methods=["POST"])
 def env_step():
-    data       = request.get_json(silent=True) or {} or {}
+    data       = request.get_json(force=True, silent=True) or {}
     session_id = data.get("session_id", "default")
     env        = envs.get(session_id)
 
@@ -482,7 +482,7 @@ def get_tasks():
 
 @app.route("/grade", methods=["POST"])
 def grade():
-    data       = request.get_json(silent=True) or {} or {}
+    data       = request.get_json(force=True, silent=True) or {}
     session_id = data.get("session_id", "default")
     env        = envs.get(session_id)
     if not env:
