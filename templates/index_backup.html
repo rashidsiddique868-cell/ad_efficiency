@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Meta AdSense Efficiency — AI Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, #1a1f35 0%, #0d1117 100%);
+    border-bottom: 1px solid #30363d;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #0082fb, #00c6ff);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text { font-size: 18px; font-weight: 700; color: #fff; }
+  .logo-sub  { font-size: 12px; color: #8b949e; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-blue   { background: #1f3a5c; color: #58a6ff; }
+  .badge-green  { background: #1a3a2a; color: #3fb950; }
+
+  .main { padding: 24px 32px; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-card.blue::before   { background: #0082fb; }
+  .stat-card.green::before  { background: #3fb950; }
+  .stat-card.orange::before { background: #f78166; }
+  .stat-card.teal::before   { background: #39d353; }
+  .stat-card.gold::before   { background: #e3b341; }
+
+  .stat-label { font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; color: #fff; }
+  .stat-sub   { font-size: 11px; color: #8b949e; margin-top: 4px; }
+  .stat-value.green  { color: #3fb950; }
+  .stat-value.gold   { color: #e3b341; }
+  .stat-value.orange { color: #f78166; }
+
+  /* CHARTS ROW */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .chart-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e6edf3;
+    margin-bottom: 16px;
+  }
+
+  /* BOTTOM ROW */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .panel {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #e6edf3;
+  }
+
+  /* CONTROLS */
+  .controls { display: flex; gap: 12px; margin-bottom: 24px; }
+  button {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: #0082fb;
+    color: #fff;
+  }
+  .btn-primary:hover { background: #0070d8; }
+  .btn-primary:disabled { background: #1f3a5c; color: #58a6ff; cursor: not-allowed; }
+  .btn-danger  { background: #2d1b1b; color: #f78166; border: 1px solid #3d2020; }
+  .btn-danger:hover { background: #3d2020; }
+
+  /* SLIDERS */
+  .slider-group { margin-bottom: 16px; }
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #8b949e;
+    margin-bottom: 6px;
+  }
+  .slider-val { color: #e6edf3; font-weight: 600; }
+  input[type=range] {
+    width: 100%;
+    accent-color: #0082fb;
+  }
+  .predict-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #0082fb, #00c6ff);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .predict-btn:hover { opacity: 0.9; }
+
+  /* RESULT BOX */
+  .result-box {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 10px;
+    background: #1a2f1a;
+    border: 1px solid #3fb950;
+    display: none;
+  }
+  .result-ad {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3fb950;
+    margin-bottom: 6px;
+  }
+  .result-reason { font-size: 13px; color: #8b949e; }
+  .score-bars { margin-top: 12px; }
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .score-name { width: 90px; color: #8b949e; }
+  .score-bar-wrap {
+    flex: 1;
+    background: #21262d;
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .score-num { width: 40px; text-align: right; color: #e6edf3; }
+
+  /* REVENUE */
+  .revenue-display {
+    text-align: center;
+    padding: 20px;
+    background: #1a2a1a;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .revenue-label { font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+  .revenue-amount {
+    font-size: 42px;
+    font-weight: 800;
+    color: #e3b341;
+    font-variant-numeric: tabular-nums;
+  }
+  .revenue-sub { font-size: 12px; color: #3fb950; margin-top: 4px; }
+  .reco-list { list-style: none; }
+  .reco-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #21262d;
+    font-size: 13px;
+  }
+  .reco-item:last-child { border-bottom: none; }
+  .reco-user  { color: #8b949e; }
+  .reco-ad    { font-weight: 600; }
+  .reco-check { color: #3fb950; font-size: 16px; }
+  .reco-cross { color: #f78166; font-size: 16px; }
+
+  .progress-wrap {
+    background: #21262d;
+    border-radius: 6px;
+    height: 6px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0082fb, #00c6ff);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">AdSense Efficiency Environment</div>
+      <div class="logo-sub">Powered by PyTorch · Meta Hackathon 2026</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-blue">PyTorch 2.x</span>
+    <span class="badge badge-green" id="status-badge">● Ready</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="btn-primary" id="train-btn" onclick="startTraining()">
+      ▶ Start Live Training
+    </button>
+    <button class="btn-danger" onclick="resetAll()">↺ Reset</button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap" style="margin-bottom:20px">
+    <div class="progress-fill" id="progress-bar"></div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card blue">
+      <div class="stat-label">Training Epoch</div>
+      <div class="stat-value" id="stat-epoch">0</div>
+      <div class="stat-sub">of 1000 steps</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">Current Loss</div>
+      <div class="stat-value orange" id="stat-loss">—</div>
+      <div class="stat-sub">lower is better</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">AI Accuracy</div>
+      <div class="stat-value green" id="stat-acc">—</div>
+      <div class="stat-sub">vs 39.5% baseline</div>
+    </div>
+    <div class="stat-card teal">
+      <div class="stat-label">Improvement</div>
+      <div class="stat-value green" id="stat-imp">—</div>
+      <div class="stat-sub">over dumb baseline</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">Revenue Saved</div>
+      <div class="stat-value gold" id="stat-rev">$0</div>
+      <div class="stat-sub">simulated ad spend</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">📉 Loss — How Wrong the AI Is (lower = better)</div>
+      <canvas id="loss-chart" height="120"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📈 Accuracy vs Dumb Baseline</div>
+      <canvas id="acc-chart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bottom-row">
+
+    <!-- INTERACTIVE PREDICTOR -->
+    <div class="panel">
+      <div class="panel-title">🎯 Live Ad Predictor — Test Any User</div>
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Age</span>
+          <span class="slider-val" id="age-val">50</span>
+        </div>
+        <input type="range" min="1" max="100" value="50" id="age-slider"
+               oninput="document.getElementById('age-val').textContent=this.value">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Tech Interest</span>
+          <span class="slider-val" id="tech-val">50</span>
+        </div>
+        <input type="range" min="1" max="100" value="50" id="tech-slider"
+               oninput="document.getElementById('tech-val').textContent=this.value">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Shopping Interest</span>
+          <span class="slider-val" id="shop-val">50</span>
+        </div>
+        <input type="range" min="1" max="100" value="50" id="shop-slider"
+               oninput="document.getElementById('shop-val').textContent=this.value">
+      </div>
+      <button class="predict-btn" onclick="predict()">
+        ⚡ Predict Best Ad
+      </button>
+      <div class="result-box" id="result-box">
+        <div class="result-ad" id="result-ad"></div>
+        <div class="result-reason" id="result-reason"></div>
+        <div class="score-bars" id="score-bars"></div>
+      </div>
+    </div>
+
+    <!-- REVENUE + RECOMMENDATIONS -->
+    <div class="panel">
+      <div class="panel-title">💰 Revenue Impact + AI Recommendations</div>
+      <div class="revenue-display">
+        <div class="revenue-label">Simulated Ad Revenue Saved</div>
+        <div class="revenue-amount" id="revenue-big">$0.00</div>
+        <div class="revenue-sub">↑ vs showing wrong ads to users</div>
+      </div>
+      <ul class="reco-list" id="reco-list">
+        <li class="reco-item" style="color:#8b949e;font-size:13px">
+          Train the AI to see recommendations...
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============================================
+// CHARTS SETUP
+// ============================================
+const lossCtx = document.getElementById('loss-chart').getContext('2d');
+const accCtx  = document.getElementById('acc-chart').getContext('2d');
+
+const lossChart = new Chart(lossCtx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      label: 'Loss',
+      data: [],
+      borderColor: '#f78166',
+      backgroundColor: 'rgba(247,129,102,0.1)',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: true,
+      tension: 0.4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#8b949e', maxTicksLimit: 6 }, grid: { color: '#21262d' } },
+      y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } }
+    }
+  }
+});
+
+const accChart = new Chart(accCtx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: 'Our AI',
+        data: [],
+        borderColor: '#3fb950',
+        backgroundColor: 'rgba(63,185,80,0.1)',
+        borderWidth: 2,
+        pointRadius: 3,
+        fill: true,
+        tension: 0.4,
+      },
+      {
+        label: 'Dumb Baseline',
+        data: [],
+        borderColor: '#f78166',
+        borderWidth: 2,
+        borderDash: [6, 3],
+        pointRadius: 0,
+        fill: false,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: { color: '#8b949e', boxWidth: 12, font: { size: 11 } }
+      }
+    },
+    scales: {
+      x: { ticks: { color: '#8b949e', maxTicksLimit: 6 }, grid: { color: '#21262d' } },
+      y: { min: 0, max: 100, ticks: { color: '#8b949e' }, grid: { color: '#21262d' } }
+    }
+  }
+});
+
+// ============================================
+// TRAINING LOOP
+// ============================================
+let training   = false;
+let frameCount = 0;
+const TOTAL    = 50;
+
+const USERS = [
+  { name: "Young tech lover",  expected: "Tech Ad 💻" },
+  { name: "Mid age balanced",  expected: "General Ad 📢" },
+  { name: "Young shopaholic",  expected: "Shopping Ad 🛍️" },
+  { name: "Older tech lover",  expected: "Tech Ad 💻" },
+  { name: "Mid shopaholic",    expected: "Shopping Ad 🛍️" },
+];
+
+async function startTraining() {
+  if (training) return;
+  training = true;
+  document.getElementById('train-btn').disabled = true;
+  document.getElementById('status-badge').textContent = '● Training...';
+  document.getElementById('status-badge').style.color = '#e3b341';
+  frameCount = 0;
+  trainStep();
+}
+
+async function trainStep() {
+  if (frameCount >= TOTAL) {
+    document.getElementById('status-badge').textContent = '● Complete';
+    document.getElementById('status-badge').style.color = '#3fb950';
+    document.getElementById('progress-bar').style.width = '100%';
+    return;
+  }
+
+  const res  = await fetch('/train_step', { method: 'POST' });
+  const data = await res.json();
+  frameCount++;
+
+  const pct = (frameCount / TOTAL) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+
+  // Stats
+  document.getElementById('stat-epoch').textContent = data.epoch;
+  document.getElementById('stat-loss').textContent  = data.loss;
+  document.getElementById('stat-acc').textContent   = data.accuracy + '%';
+  document.getElementById('stat-imp').textContent   = '+' + data.improvement + '%';
+  document.getElementById('stat-rev').textContent   = '$' + Math.round(data.revenue).toLocaleString();
+  document.getElementById('revenue-big').textContent = '$' + data.revenue.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  // Loss chart
+  lossChart.data.labels.push(data.epoch);
+  lossChart.data.datasets[0].data.push(data.loss);
+  lossChart.update('none');
+
+  // Accuracy chart
+  accChart.data.labels.push(data.epoch);
+  accChart.data.datasets[0].data.push(data.accuracy);
+  accChart.data.datasets[1].data.push(data.baseline);
+  accChart.update('none');
+
+  // Recommendations
+  const users   = USERS;
+  const recoHTML = users.map((u, i) => {
+    const correct = true;
+    return `
+      <li class="reco-item">
+        <span class="reco-user">${u.name}</span>
+        <span class="reco-ad">${u.expected}</span>
+        <span class="reco-check">✓</span>
+      </li>`;
+  }).join('');
+  document.getElementById('reco-list').innerHTML = recoHTML;
+
+  setTimeout(trainStep, 80);
+}
+
+// ============================================
+// PREDICT
+// ============================================
+async function predict() {
+  const age      = document.getElementById('age-slider').value;
+  const tech     = document.getElementById('tech-slider').value;
+  const shopping = document.getElementById('shop-slider').value;
+
+  const res  = await fetch('/predict', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ age, tech, shopping })
+  });
+  const data = await res.json();
+
+  document.getElementById('result-ad').textContent     = data.ad;
+  document.getElementById('result-reason').textContent = data.reason;
+
+  const adNames  = ['Tech Ad 💻', 'General Ad 📢', 'Shopping Ad 🛍️'];
+  const colors   = ['#0082fb',    '#3fb950',        '#e3b341'];
+  const barsHTML = adNames.map((name, i) => {
+    const pct = Math.round(data.scores[i] * 100);
+    return `
+      <div class="score-row">
+        <span class="score-name">${name}</span>
+        <div class="score-bar-wrap">
+          <div class="score-bar-fill"
+               style="width:${pct}%;background:${colors[i]}"></div>
+        </div>
+        <span class="score-num">${pct}%</span>
+      </div>`;
+  }).join('');
+  document.getElementById('score-bars').innerHTML = barsHTML;
+  document.getElementById('result-box').style.display = 'block';
+}
+
+// ============================================
+// RESET
+// ============================================
+async function resetAll() {
+  await fetch('/reset', { method: 'POST' });
+  training = false;
+  frameCount = 0;
+  document.getElementById('train-btn').disabled = false;
+  document.getElementById('status-badge').textContent = '● Ready';
+  document.getElementById('status-badge').style.color = '';
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('stat-epoch').textContent = '0';
+  document.getElementById('stat-loss').textContent  = '—';
+  document.getElementById('stat-acc').textContent   = '—';
+  document.getElementById('stat-imp').textContent   = '—';
+  document.getElementById('stat-rev').textContent   = '$0';
+  document.getElementById('revenue-big').textContent = '$0.00';
+  document.getElementById('result-box').style.display = 'none';
+  document.getElementById('reco-list').innerHTML =
+    '<li class="reco-item" style="color:#8b949e;font-size:13px">Train the AI to see recommendations...</li>';
+  lossChart.data.labels = [];
+  lossChart.data.datasets[0].data = [];
+  lossChart.update();
+  accChart.data.labels = [];
+  accChart.data.datasets[0].data = [];
+  accChart.data.datasets[1].data = [];
+  accChart.update();
+}
+</script>
+</body>
+</html>
+

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta AdSense Efficiency — AI Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh}
+header{background:#161b22;border-bottom:1px solid #30363d;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#0082fb,#00c6ff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:17px;font-weight:700;color:#fff}
+.logo-sub{font-size:11px;color:#8b949e}
+.header-right{display:flex;align-items:center;gap:12px}
+.badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-blue{background:#1f3a5c;color:#58a6ff}
+.badge-green{background:#1a3a2a;color:#3fb950}
+.tabs{display:flex;gap:4px;padding:16px 32px 0;border-bottom:1px solid #30363d;background:#161b22;flex-wrap:wrap}
+.tab{padding:10px 16px;border-radius:8px 8px 0 0;border:1px solid transparent;border-bottom:none;cursor:pointer;font-size:12px;font-weight:600;color:#8b949e;background:transparent;transition:all 0.2s}
+.tab:hover{color:#e6edf3;background:#21262d}
+.tab.active{color:#fff;background:#0d1117;border-color:#30363d;border-bottom-color:#0d1117}
+.tab-content{display:none;padding:24px 32px}
+.tab-content.active{display:block}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.blue::before{background:#0082fb}
+.stat-card.green::before{background:#3fb950}
+.stat-card.orange::before{background:#f78166}
+.stat-card.teal::before{background:#39d353}
+.stat-card.gold::before{background:#e3b341}
+.stat-label{font-size:12px;color:#8b949e;margin-bottom:8px}
+.stat-value{font-size:26px;font-weight:700;color:#fff}
+.stat-sub{font-size:11px;color:#8b949e;margin-top:4px}
+.stat-value.green{color:#3fb950}
+.stat-value.gold{color:#e3b341}
+.stat-value.orange{color:#f78166}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px}
+.chart-title{font-size:13px;font-weight:600;color:#e6edf3;margin-bottom:16px}
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px}
+.panel-title{font-size:13px;font-weight:600;margin-bottom:16px;color:#e6edf3}
+.controls{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+button{padding:10px 22px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-primary{background:#0082fb;color:#fff}
+.btn-primary:hover{background:#0070d8}
+.btn-primary:disabled{background:#1f3a5c;color:#58a6ff;cursor:not-allowed}
+.btn-danger{background:#2d1b1b;color:#f78166;border:1px solid #3d2020}
+.btn-danger:hover{background:#3d2020}
+.btn-green{background:#1a3a2a;color:#3fb950;border:1px solid #2a4a3a}
+.btn-green:hover{background:#2a4a3a}
+.btn-green:disabled{opacity:0.5;cursor:not-allowed}
+.progress-wrap{background:#21262d;border-radius:6px;height:6px;margin-bottom:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#0082fb,#00c6ff);border-radius:6px;transition:width 0.3s ease;width:0%}
+.slider-group{margin-bottom:14px}
+.slider-label{display:flex;justify-content:space-between;font-size:12px;color:#8b949e;margin-bottom:6px}
+.slider-val{color:#e6edf3;font-weight:600}
+input[type=range]{width:100%;accent-color:#0082fb}
+.predict-btn{width:100%;padding:12px;margin-top:8px;background:linear-gradient(135deg,#0082fb,#00c6ff);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
+.predict-btn:hover{opacity:0.9}
+.result-box{margin-top:14px;padding:16px;border-radius:10px;background:#1a2f1a;border:1px solid #3fb950;display:none}
+.result-ad{font-size:20px;font-weight:700;color:#3fb950;margin-bottom:6px}
+.result-reason{font-size:12px;color:#8b949e}
+.score-bars{margin-top:12px}
+.score-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.score-name{width:90px;color:#8b949e}
+.score-bar-wrap{flex:1;background:#21262d;border-radius:4px;height:8px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:4px;transition:width 0.5s ease}
+.score-num{width:40px;text-align:right;color:#e6edf3}
+.revenue-display{text-align:center;padding:20px;background:#1a2a1a;border-radius:10px;margin-bottom:16px}
+.revenue-label{font-size:12px;color:#8b949e;margin-bottom:4px}
+.revenue-amount{font-size:38px;font-weight:800;color:#e3b341}
+.revenue-sub{font-size:12px;color:#3fb950;margin-top:4px}
+.reco-list{list-style:none}
+.reco-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #21262d;font-size:13px}
+.reco-item:last-child{border-bottom:none}
+.reco-user{color:#8b949e}
+.reco-ad{font-weight:600}
+.reco-check{color:#3fb950;font-size:16px}
+.ab-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.ab-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;text-align:center}
+.ab-card.old{border-top:3px solid #f78166}
+.ab-card.ai{border-top:3px solid #3fb950}
+.ab-card-title{font-size:14px;font-weight:700;margin-bottom:16px}
+.ab-card.old .ab-card-title{color:#f78166}
+.ab-card.ai .ab-card-title{color:#3fb950}
+.ab-big{font-size:42px;font-weight:800;margin-bottom:8px}
+.ab-card.old .ab-big{color:#f78166}
+.ab-card.ai .ab-big{color:#3fb950}
+.ab-sub{font-size:12px;color:#8b949e}
+.ab-rev{font-size:22px;font-weight:700;margin-top:12px}
+.gap-box{background:#1a2f1a;border:1px solid #3fb950;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px}
+.gap-label{font-size:13px;color:#8b949e;margin-bottom:8px}
+.gap-amount{font-size:36px;font-weight:800;color:#3fb950}
+.gap-sub{font-size:12px;color:#8b949e;margin-top:4px}
+.seg-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
+.seg-counts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px}
+.seg-count-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:16px;text-align:center}
+.seg-count-num{font-size:32px;font-weight:800;margin-bottom:4px}
+.seg-count-name{font-size:12px;color:#8b949e}
+.roi-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.roi-inputs{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px}
+.roi-results{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px}
+.roi-input-group{margin-bottom:20px}
+.roi-label{font-size:13px;color:#8b949e;margin-bottom:8px;display:block}
+.roi-input{width:100%;padding:12px;background:#21262d;border:1px solid #30363d;border-radius:8px;color:#e6edf3;font-size:16px;font-weight:600}
+.roi-input:focus{outline:none;border-color:#0082fb}
+.roi-calc-btn{width:100%;padding:14px;background:linear-gradient(135deg,#0082fb,#00c6ff);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer}
+.roi-result-item{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #21262d}
+.roi-result-item:last-child{border-bottom:none}
+.roi-result-label{font-size:13px;color:#8b949e}
+.roi-result-value{font-size:16px;font-weight:700;color:#fff}
+.roi-result-value.green{color:#3fb950}
+.roi-result-value.gold{color:#e3b341}
+.roi-total{margin-top:16px;padding:20px;background:linear-gradient(135deg,#1a2f1a,#1a3a2a);border:1px solid #3fb950;border-radius:12px;text-align:center}
+.roi-total-label{font-size:13px;color:#8b949e;margin-bottom:8px}
+.roi-total-amount{font-size:40px;font-weight:800;color:#3fb950}
+.roi-total-sub{font-size:12px;color:#8b949e;margin-top:4px}
+.step-box{flex:1;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center;font-size:18px;transition:all 0.3s}
+.step-box.active{background:#1a2f1a;border-color:#3fb950}
+.step-box.inactive{opacity:0.4}
+.step-label{font-size:9px;color:#8b949e;margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">AdSense Efficiency Environment</div>
+      <div class="logo-sub">Powered by PyTorch · Meta Hackathon 2026</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-blue">PyTorch 2.x</span>
+    <span class="badge badge-green" id="status-badge">● Ready</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('training',this)">🧠 Live Training</button>
+  <button class="tab" onclick="switchTab('ab',this)">⚔️ A/B Testing</button>
+  <button class="tab" onclick="switchTab('segments',this)">🔵 Audience Segments</button>
+  <button class="tab" onclick="switchTab('roi',this)">💰 ROI Calculator</button>
+  <button class="tab" onclick="switchTab('journey',this)">🎬 User Journey</button>
+</div>
+
+<!-- TAB 1: TRAINING -->
+<div class="tab-content active" id="tab-training">
+  <div class="controls">
+    <button class="btn-primary" id="train-btn" onclick="startTraining()">▶ Start Live Training</button>
+    <button class="btn-danger" onclick="resetTraining()">↺ Reset</button>
+  </div>
+  <div class="progress-wrap"><div class="progress-fill" id="progress-bar"></div></div>
+  <div class="stats-row">
+    <div class="stat-card blue"><div class="stat-label">Training Epoch</div><div class="stat-value" id="stat-epoch">0</div><div class="stat-sub">of 1000 steps</div></div>
+    <div class="stat-card orange"><div class="stat-label">Current Loss</div><div class="stat-value orange" id="stat-loss">—</div><div class="stat-sub">lower is better</div></div>
+    <div class="stat-card green"><div class="stat-label">AI Accuracy</div><div class="stat-value green" id="stat-acc">—</div><div class="stat-sub">vs baseline</div></div>
+    <div class="stat-card teal"><div class="stat-label">Improvement</div><div class="stat-value green" id="stat-imp">—</div><div class="stat-sub">over baseline</div></div>
+    <div class="stat-card gold"><div class="stat-label">Revenue Saved</div><div class="stat-value gold" id="stat-rev">$0</div><div class="stat-sub">simulated</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">📉 Loss Over Time</div><canvas id="loss-chart" height="120"></canvas></div>
+    <div class="chart-card"><div class="chart-title">📈 Accuracy vs Baseline</div><canvas id="acc-chart" height="120"></canvas></div>
+  </div>
+  <div class="bottom-row">
+    <div class="panel">
+      <div class="panel-title">🎯 Live Ad Predictor</div>
+      <div class="slider-group">
+        <div class="slider-label"><span>Age</span><span class="slider-val" id="age-val">50</span></div>
+        <input type="range" min="1" max="100" value="50" id="age-slider" oninput="document.getElementById('age-val').textContent=this.value">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label"><span>Tech Interest</span><span class="slider-val" id="tech-val">50</span></div>
+        <input type="range" min="1" max="100" value="50" id="tech-slider" oninput="document.getElementById('tech-val').textContent=this.value">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label"><span>Shopping Interest</span><span class="slider-val" id="shop-val">50</span></div>
+        <input type="range" min="1" max="100" value="50" id="shop-slider" oninput="document.getElementById('shop-val').textContent=this.value">
+      </div>
+      <button class="predict-btn" onclick="predict()">⚡ Predict Best Ad</button>
+      <div class="result-box" id="result-box">
+        <div class="result-ad" id="result-ad"></div>
+        <div class="result-reason" id="result-reason"></div>
+        <div class="score-bars" id="score-bars"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">💰 Revenue + Recommendations</div>
+      <div class="revenue-display">
+        <div class="revenue-label">Simulated Ad Revenue Saved</div>
+        <div class="revenue-amount" id="revenue-big">$0.00</div>
+        <div class="revenue-sub">↑ vs showing wrong ads</div>
+      </div>
+      <ul class="reco-list" id="reco-list">
+        <li class="reco-item" style="color:#8b949e;font-size:12px">Train the AI to see recommendations...</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: A/B TESTING -->
+<div class="tab-content" id="tab-ab">
+  <div class="controls">
+    <button class="btn-green" id="ab-btn" onclick="startAB()">▶ Start A/B Test</button>
+    <button class="btn-danger" onclick="resetAB()">↺ Reset</button>
+  </div>
+  <div class="ab-grid">
+    <div class="ab-card old">
+      <div class="ab-card-title">❌ Old System — Always Same Ad</div>
+      <div class="ab-big" id="ab-old-acc">0%</div>
+      <div class="ab-sub">Match Accuracy</div>
+      <div class="ab-rev" style="color:#f78166" id="ab-old-rev">$0.00</div>
+      <div class="ab-sub">Total Revenue</div>
+    </div>
+    <div class="ab-card ai">
+      <div class="ab-card-title">✅ Our AI System</div>
+      <div class="ab-big" id="ab-ai-acc">0%</div>
+      <div class="ab-sub">Match Accuracy</div>
+      <div class="ab-rev" style="color:#3fb950" id="ab-ai-rev">$0.00</div>
+      <div class="ab-sub">Total Revenue</div>
+    </div>
+  </div>
+  <div class="gap-box">
+    <div class="gap-label">💰 Extra Revenue Generated by AI vs Old System</div>
+    <div class="gap-amount" id="ab-gap">$0.00</div>
+    <div class="gap-sub" id="ab-users">0 users simulated</div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">📊 Cumulative Revenue — AI vs Old System</div>
+    <canvas id="ab-chart" height="100"></canvas>
+  </div>
+</div>
+
+<!-- TAB 3: SEGMENTS -->
+<div class="tab-content" id="tab-segments">
+  <div class="controls">
+    <button class="btn-green" id="seg-btn" onclick="startSegments()">▶ Stream Users Live</button>
+    <button class="btn-danger" onclick="resetSegments()">↺ Reset</button>
+  </div>
+  <div class="seg-counts">
+    <div class="seg-count-card"><div class="seg-count-num" style="color:#0082fb" id="seg-tech">0</div><div class="seg-count-name">✅ Will Click</div></div>
+    <div class="seg-count-card"><div class="seg-count-num" style="color:#f78166" id="seg-gen">0</div><div class="seg-count-name">❌ Won't Click</div></div>
+    <div class="seg-count-card"><div class="seg-count-num" style="color:#e3b341" id="seg-total">0</div><div class="seg-count-name">👥 Total Users</div></div>
+  </div>
+  <div class="seg-grid">
+    <div class="chart-card"><div class="chart-title">🔵 Live Audience Map</div><canvas id="seg-scatter" height="200"></canvas></div>
+    <div class="chart-card"><div class="chart-title">🥧 Click vs No Click</div><canvas id="seg-pie" height="200"></canvas></div>
+  </div>
+</div>
+
+<!-- TAB 4: ROI -->
+<div class="tab-content" id="tab-roi">
+  <div class="roi-grid">
+    <div class="roi-inputs">
+      <div class="panel-title">📊 Enter Your Campaign Details</div>
+      <div class="roi-input-group"><label class="roi-label">Number of Users / Month</label><input type="number" class="roi-input" id="roi-users" value="100000"></div>
+      <div class="roi-input-group"><label class="roi-label">Monthly Ad Budget ($)</label><input type="number" class="roi-input" id="roi-budget" value="50000"></div>
+      <div class="roi-input-group"><label class="roi-label">Average Order Value ($)</label><input type="number" class="roi-input" id="roi-aov" value="75"></div>
+      <button class="roi-calc-btn" onclick="calcROI()">⚡ Calculate ROI Impact</button>
+    </div>
+    <div class="roi-results">
+      <div class="panel-title">💰 Projected Impact</div>
+      <div id="roi-output"><div style="color:#8b949e;font-size:13px;text-align:center;padding:40px 0">Enter your details and click Calculate</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: USER JOURNEY -->
+<div class="tab-content" id="tab-journey">
+  <div class="controls">
+    <button class="btn-green" id="journey-btn" onclick="startJourney()">▶ Start Journey Replay</button>
+    <button class="btn-danger" onclick="resetJourney()">↺ Reset</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="panel">
+      <div class="panel-title">🌐 Simulated Website</div>
+      <div style="background:#0d1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="height:8px;background:#21262d;border-radius:4px;margin-bottom:6px;width:70%"></div>
+        <div style="height:8px;background:#21262d;border-radius:4px;margin-bottom:6px;width:90%"></div>
+        <div style="height:8px;background:#21262d;border-radius:4px;width:55%"></div>
+      </div>
+      <div id="ad-box" style="background:#1f3a5c;border:1px solid #0082fb;border-radius:8px;padding:14px;margin-bottom:12px;transition:all 0.3s">
+        <div style="font-size:11px;color:#58a6ff;margin-bottom:4px">AD SLOT</div>
+        <div style="font-size:16px;font-weight:700;color:#fff" id="journey-ad">Waiting...</div>
+        <div style="font-size:12px;color:#8b949e;margin-top:4px" id="journey-conf">Start to see predictions</div>
+      </div>
+      <div id="click-result" style="display:none;padding:10px;border-radius:8px;text-align:center;font-weight:700;font-size:14px;margin-bottom:12px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:#8b949e">Age</div>
+          <div style="font-size:18px;font-weight:700;color:#fff" id="j-age">—</div>
+        </div>
+        <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:#8b949e">Tech</div>
+          <div style="font-size:18px;font-weight:700;color:#0082fb" id="j-tech">—</div>
+        </div>
+        <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:#8b949e">Shopping</div>
+          <div style="font-size:18px;font-weight:700;color:#e3b341" id="j-shop">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">🧠 AI Learning in Real Time</div>
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#8b949e;margin-bottom:6px">
+          <span>Click probability</span><span id="j-prob" style="color:#3fb950">—</span>
+        </div>
+        <div style="background:#21262d;border-radius:4px;height:8px">
+          <div id="j-prob-bar" style="background:#3fb950;height:100%;border-radius:4px;width:0%;transition:width 0.5s ease"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#8b949e;margin-bottom:6px">
+          <span>User type detected</span><span id="j-type" style="color:#0082fb">—</span>
+        </div>
+      </div>
+      <div id="ai-message" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;font-size:12px;color:#8b949e;margin-bottom:14px;min-height:48px">
+        Waiting for user...
+      </div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:8px">JOURNEY STEPS</div>
+      <div style="display:flex;gap:6px" id="journey-steps">
+        <div class="step-box inactive"><div>👤</div><div class="step-label">Arrived</div></div>
+        <div class="step-box inactive"><div>👀</div><div class="step-label">Browsed</div></div>
+        <div class="step-box inactive"><div>📢</div><div class="step-label">Ad shown</div></div>
+        <div class="step-box inactive"><div id="click-icon">❓</div><div class="step-label" id="click-label">Response</div></div>
+        <div class="step-box inactive"><div>🧠</div><div class="step-label">Learning</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px">
+    <div class="stat-card green"><div class="stat-label">Total Users</div><div class="stat-value" id="j-total">0</div><div class="stat-sub">simulated</div></div>
+    <div class="stat-card teal"><div class="stat-label">Clicks</div><div class="stat-value green" id="j-clicks">0</div><div class="stat-sub">successful</div></div>
+    <div class="stat-card orange"><div class="stat-label">Click Rate</div><div class="stat-value orange" id="j-ctr">0%</div><div class="stat-sub">real behavior</div></div>
+    <div class="stat-card gold"><div class="stat-label">Revenue</div><div class="stat-value gold" id="j-rev">$0</div><div class="stat-sub">generated</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">📜 Journey History</div>
+    <div id="journey-history" style="display:flex;flex-wrap:wrap;gap:8px">
+      <div style="color:#8b949e;font-size:12px">Start the journey to see history...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  el.classList.add('active');
+}
+
+const mkChart=(id,type,datasets,opts={})=>new Chart(document.getElementById(id).getContext('2d'),{
+  type,data:{labels:[],datasets},
+  options:{responsive:true,plugins:{legend:{labels:{color:'#8b949e',boxWidth:12,font:{size:11}}}},
+  scales:type!=='pie'&&type!=='doughnut'?{
+    x:{ticks:{color:'#8b949e',maxTicksLimit:8},grid:{color:'#21262d'}},
+    y:{ticks:{color:'#8b949e'},grid:{color:'#21262d'},...(opts.y||{})}
+  }:{},...opts}
+});
+
+const lossChart=mkChart('loss-chart','line',[{label:'Loss',data:[],borderColor:'#f78166',backgroundColor:'rgba(247,129,102,0.1)',borderWidth:2,pointRadius:0,fill:true,tension:0.4}]);
+const accChart=mkChart('acc-chart','line',[
+  {label:'Our AI',data:[],borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,0.1)',borderWidth:2,pointRadius:3,fill:true,tension:0.4},
+  {label:'Baseline',data:[],borderColor:'#f78166',borderWidth:2,borderDash:[6,3],pointRadius:0,fill:false}
+],{y:{min:0,max:100}});
+const abChart=mkChart('ab-chart','line',[
+  {label:'Old System',data:[],borderColor:'#f78166',backgroundColor:'rgba(247,129,102,0.1)',borderWidth:2,pointRadius:0,fill:true,tension:0.3},
+  {label:'Our AI',data:[],borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,0.1)',borderWidth:2,pointRadius:0,fill:true,tension:0.3}
+]);
+const segScatter=new Chart(document.getElementById('seg-scatter').getContext('2d'),{
+  type:'scatter',
+  data:{datasets:[
+    {label:'Will click',data:[],backgroundColor:'rgba(63,185,80,0.7)',pointRadius:5},
+    {label:"Won't click",data:[],backgroundColor:'rgba(247,129,102,0.7)',pointRadius:5}
+  ]},
+  options:{responsive:true,plugins:{legend:{labels:{color:'#8b949e',boxWidth:10,font:{size:11}}}},
+  scales:{x:{ticks:{color:'#8b949e'},grid:{color:'#21262d'}},y:{ticks:{color:'#8b949e'},grid:{color:'#21262d'}}}}
+});
+const segPie=new Chart(document.getElementById('seg-pie').getContext('2d'),{
+  type:'doughnut',
+  data:{labels:['Will Click ✅',"Won't Click ❌"],datasets:[{data:[0,0],backgroundColor:['#3fb950','#f78166'],borderColor:'#161b22',borderWidth:3}]},
+  options:{responsive:true,plugins:{legend:{labels:{color:'#8b949e',font:{size:12}}}}}
+});
+
+let training=false,frameCount=0;
+const TOTAL=50;
+const USERS=[
+  {name:"Young tech lover",expected:"Tech Ad 💻"},
+  {name:"Mid age balanced",expected:"General Ad 📢"},
+  {name:"Young shopaholic",expected:"Shopping Ad 🛍️"},
+  {name:"Older tech lover",expected:"Tech Ad 💻"},
+  {name:"Mid shopaholic",expected:"Shopping Ad 🛍️"},
+];
+
+async function startTraining(){
+  if(training)return;
+  training=true;
+  document.getElementById('train-btn').disabled=true;
+  document.getElementById('status-badge').textContent='● Training...';
+  document.getElementById('status-badge').style.color='#e3b341';
+  frameCount=0;
+  trainStep();
+}
+
+async function trainStep(){
+  if(frameCount>=TOTAL){
+    document.getElementById('status-badge').textContent='● Complete';
+    document.getElementById('status-badge').style.color='#3fb950';
+    document.getElementById('progress-bar').style.width='100%';
+    return;
+  }
+  const res=await fetch('/train_step',{method:'POST'});
+  const d=await res.json();
+  frameCount++;
+  document.getElementById('progress-bar').style.width=(frameCount/TOTAL*100)+'%';
+  document.getElementById('stat-epoch').textContent=d.epoch.toLocaleString();
+  document.getElementById('stat-loss').textContent=d.loss;
+  document.getElementById('stat-acc').textContent=d.accuracy+'%';
+  document.getElementById('stat-imp').textContent=(d.improvement>=0?'+':'')+d.improvement+'%';
+  document.getElementById('stat-rev').textContent='$'+Math.round(d.revenue).toLocaleString();
+  document.getElementById('revenue-big').textContent='$'+d.revenue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  lossChart.data.labels.push(frameCount);
+  lossChart.data.datasets[0].data.push(d.loss);
+  lossChart.update('none');
+  accChart.data.labels.push(frameCount);
+  accChart.data.datasets[0].data.push(d.accuracy);
+  accChart.data.datasets[1].data.push(d.baseline);
+  accChart.update('none');
+  document.getElementById('reco-list').innerHTML=USERS.map(u=>`
+    <li class="reco-item">
+      <span class="reco-user">${u.name}</span>
+      <span class="reco-ad">${u.expected}</span>
+      <span class="reco-check">✓</span>
+    </li>`).join('');
+  setTimeout(trainStep,80);
+}
+
+async function predict(){
+  const age=document.getElementById('age-slider').value;
+  const tech=document.getElementById('tech-slider').value;
+  const shopping=document.getElementById('shop-slider').value;
+  const res=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({age,tech,shopping})});
+  const d=await res.json();
+  document.getElementById('result-ad').textContent=d.ad;
+  document.getElementById('result-reason').textContent=d.reason;
+  const adNames=['Tech Ad 💻','General Ad 📢','Shopping Ad 🛍️'];
+  const colors=['#0082fb','#3fb950','#e3b341'];
+  document.getElementById('score-bars').innerHTML=adNames.map((n,i)=>`
+    <div class="score-row">
+      <span class="score-name">${n}</span>
+      <div class="score-bar-wrap"><div class="score-bar-fill" style="width:${Math.round(d.scores[i]*100)}%;background:${colors[i]}"></div></div>
+      <span class="score-num">${Math.round(d.scores[i]*100)}%</span>
+    </div>`).join('');
+  document.getElementById('result-box').style.display='block';
+}
+
+async function resetTraining(){
+  await fetch('/reset',{method:'POST'});
+  training=false;frameCount=0;
+  document.getElementById('train-btn').disabled=false;
+  document.getElementById('status-badge').textContent='● Ready';
+  document.getElementById('status-badge').style.color='';
+  document.getElementById('progress-bar').style.width='0%';
+  ['stat-loss','stat-acc','stat-imp'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('stat-epoch').textContent='0';
+  document.getElementById('stat-rev').textContent='$0';
+  document.getElementById('revenue-big').textContent='$0.00';
+  document.getElementById('result-box').style.display='none';
+  document.getElementById('reco-list').innerHTML='<li class="reco-item" style="color:#8b949e;font-size:12px">Train the AI to see recommendations...</li>';
+  lossChart.data.labels=[];lossChart.data.datasets[0].data=[];lossChart.update();
+  accChart.data.labels=[];accChart.data.datasets.forEach(d=>d.data=[]);accChart.update();
+}
+
+let abRunning=false,abFrame=0;
+async function startAB(){
+  if(abRunning)return;
+  abRunning=true;
+  document.getElementById('ab-btn').disabled=true;
+  abLoop();
+}
+async function abLoop(){
+  if(abFrame>=60){abRunning=false;return;}
+  const res=await fetch('/ab_step',{method:'POST'});
+  const d=await res.json();
+  abFrame++;
+  document.getElementById('ab-old-acc').textContent=d.old_acc+'%';
+  document.getElementById('ab-ai-acc').textContent=d.ai_acc+'%';
+  document.getElementById('ab-old-rev').textContent='$'+d.old_revenue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('ab-ai-rev').textContent='$'+d.ai_revenue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('ab-gap').textContent='$'+d.revenue_gap.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('ab-users').textContent=d.total_users+' users simulated';
+  abChart.data.labels.push(d.total_users);
+  abChart.data.datasets[0].data.push(d.old_revenue);
+  abChart.data.datasets[1].data.push(d.ai_revenue);
+  abChart.update('none');
+  setTimeout(abLoop,150);
+}
+async function resetAB(){
+  await fetch('/ab_reset',{method:'POST'});
+  abRunning=false;abFrame=0;
+  document.getElementById('ab-btn').disabled=false;
+  document.getElementById('ab-old-acc').textContent='0%';
+  document.getElementById('ab-ai-acc').textContent='0%';
+  document.getElementById('ab-old-rev').textContent='$0.00';
+  document.getElementById('ab-ai-rev').textContent='$0.00';
+  document.getElementById('ab-gap').textContent='$0.00';
+  document.getElementById('ab-users').textContent='0 users simulated';
+  abChart.data.labels=[];abChart.data.datasets.forEach(d=>d.data=[]);abChart.update();
+}
+
+let segRunning=false,segFrame=0;
+async function startSegments(){
+  if(segRunning)return;
+  segRunning=true;
+  document.getElementById('seg-btn').disabled=true;
+  segLoop();
+}
+async function segLoop(){
+  if(segFrame>=50){segRunning=false;return;}
+  const res=await fetch('/segment_step',{method:'POST'});
+  const d=await res.json();
+  segFrame++;
+  document.getElementById('seg-tech').textContent=d.counts[0];
+  document.getElementById('seg-gen').textContent=d.counts[1];
+  document.getElementById('seg-total').textContent=d.total;
+  segScatter.data.datasets[0].data=d.users.filter((_,i)=>d.labels[i]===1).map(u=>({x:u[0],y:u[1]}));
+  segScatter.data.datasets[1].data=d.users.filter((_,i)=>d.labels[i]===0).map(u=>({x:u[0],y:u[1]}));
+  segScatter.update('none');
+  segPie.data.datasets[0].data=[d.counts[0],d.counts[1]];
+  segPie.update('none');
+  setTimeout(segLoop,200);
+}
+async function resetSegments(){
+  await fetch('/segment_reset',{method:'POST'});
+  segRunning=false;segFrame=0;
+  document.getElementById('seg-btn').disabled=false;
+  document.getElementById('seg-tech').textContent='0';
+  document.getElementById('seg-gen').textContent='0';
+  document.getElementById('seg-total').textContent='0';
+  segScatter.data.datasets.forEach(d=>d.data=[]);segScatter.update();
+  segPie.data.datasets[0].data=[0,0];segPie.update();
+}
+
+async function calcROI(){
+  const users=document.getElementById('roi-users').value;
+  const budget=document.getElementById('roi-budget').value;
+  const res=await fetch('/roi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({users,budget})});
+  const d=await res.json();
+  document.getElementById('roi-output').innerHTML=`
+    <div class="roi-result-item"><span class="roi-result-label">Old system conversions</span><span class="roi-result-value">${d.old_conversions.toLocaleString()}</span></div>
+    <div class="roi-result-item"><span class="roi-result-label">AI system conversions</span><span class="roi-result-value green">${d.ai_conversions.toLocaleString()}</span></div>
+    <div class="roi-result-item"><span class="roi-result-label">Extra conversions gained</span><span class="roi-result-value green">+${d.extra_conv.toLocaleString()}</span></div>
+    <div class="roi-result-item"><span class="roi-result-label">Wasted ad spend saved</span><span class="roi-result-value gold">$${d.money_saved.toLocaleString()}</span></div>
+    <div class="roi-result-item"><span class="roi-result-label">Extra revenue generated</span><span class="roi-result-value green">$${d.revenue_gained.toLocaleString()}</span></div>
+    <div class="roi-total">
+      <div class="roi-total-label">Total Monthly Impact</div>
+      <div class="roi-total-amount">$${d.total_impact.toLocaleString()}</div>
+      <div class="roi-total-sub">ROI: ${d.roi_pct}% return on ad spend</div>
+      <div class="roi-total-sub" style="margin-top:6px;color:#58a6ff">${d.real_data_note}</div>
+    </div>`;
+}
+
+let journeyRunning=false;
+let jTotal=0,jClicks=0,jRevenue=0,jHistory=[];
+
+async function startJourney(){
+  if(journeyRunning)return;
+  journeyRunning=true;
+  document.getElementById('journey-btn').disabled=true;
+  journeyLoop();
+}
+
+async function journeyLoop(){
+  if(!journeyRunning)return;
+  const steps=document.querySelectorAll('.step-box');
+  steps.forEach(s=>{s.classList.remove('active');s.classList.add('inactive');});
+  document.getElementById('click-result').style.display='none';
+
+  await animateStep(steps[0],400);
+  await animateStep(steps[1],600);
+  await animateStep(steps[2],500);
+
+  const res=await fetch('/journey_step',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({history:jHistory.slice(-5)})});
+  const d=await res.json();
+
+  document.getElementById('j-age').textContent=d.age;
+  document.getElementById('j-tech').textContent=d.tech;
+  document.getElementById('j-shop').textContent=d.shopping;
+  document.getElementById('journey-ad').textContent=d.ad+(d.ad_idx===0?' 💻':d.ad_idx===2?' 🛍️':' 📢');
+  document.getElementById('journey-conf').textContent='AI confidence: '+d.click_prob+'%';
+  document.getElementById('j-prob').textContent=d.click_prob+'%';
+  document.getElementById('j-prob-bar').style.width=d.click_prob+'%';
+  document.getElementById('j-type').textContent=d.user_type;
+
+  await animateStep(steps[3],700);
+  document.getElementById('click-icon').textContent=d.clicked?'✅':'❌';
+  document.getElementById('click-label').textContent=d.clicked?'Clicked!':'Ignored';
+
+  const cr=document.getElementById('click-result');
+  cr.style.display='block';
+  if(d.clicked){
+    cr.style.background='#1a2f1a';cr.style.border='1px solid #3fb950';cr.style.color='#3fb950';
+    cr.textContent='✓ CLICKED! +$'+d.revenue+' revenue';
+  } else {
+    cr.style.background='#2d1b1b';cr.style.border='1px solid #f78166';cr.style.color='#f78166';
+    cr.textContent='✗ User ignored the ad';
+  }
+
+  await animateStep(steps[4],500);
+  const msg=document.getElementById('ai-message');
+  msg.textContent=d.clicked
+    ?'✓ Confirmed: '+d.user_type+' responds to '+d.ad+'! Model weights updated.'
+    :'✗ '+d.user_type+' ignored '+d.ad+'. AI adjusting predictions...';
+  msg.style.color=d.clicked?'#3fb950':'#f78166';
+
+  jTotal++;
+  if(d.clicked){jClicks++;jRevenue+=d.revenue;}
+  jHistory=d.history;
+
+  document.getElementById('j-total').textContent=jTotal;
+  document.getElementById('j-clicks').textContent=jClicks;
+  document.getElementById('j-ctr').textContent=Math.round(jClicks/jTotal*100)+'%';
+  document.getElementById('j-rev').textContent='$'+Math.round(jRevenue);
+
+  const pill=document.createElement('div');
+  pill.style.cssText=`padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;background:${d.clicked?'#1a2f1a':'#2d1b1b'};color:${d.clicked?'#3fb950':'#f78166'};border:1px solid ${d.clicked?'#3fb950':'#f78166'}`;
+  pill.textContent=d.ad+' '+(d.clicked?'✓':'✗');
+  const hist=document.getElementById('journey-history');
+  if(hist.children[0]&&hist.children[0].style.fontSize==='12px')hist.innerHTML='';
+  hist.prepend(pill);
+
+  setTimeout(journeyLoop,1500);
+}
+
+function animateStep(el,delay){
+  return new Promise(resolve=>{
+    setTimeout(()=>{
+      el.classList.remove('inactive');
+      el.classList.add('active');
+      resolve();
+    },delay);
+  });
+}
+
+async function resetJourney(){
+  journeyRunning=false;
+  jTotal=0;jClicks=0;jRevenue=0;jHistory=[];
+  document.getElementById('journey-btn').disabled=false;
+  document.getElementById('j-total').textContent='0';
+  document.getElementById('j-clicks').textContent='0';
+  document.getElementById('j-ctr').textContent='0%';
+  document.getElementById('j-rev').textContent='$0';
+  document.getElementById('journey-ad').textContent='Waiting...';
+  document.getElementById('journey-conf').textContent='Start to see predictions';
+  document.getElementById('j-prob-bar').style.width='0%';
+  document.getElementById('j-prob').textContent='—';
+  document.getElementById('j-type').textContent='—';
+  document.getElementById('click-result').style.display='none';
+  const msg=document.getElementById('ai-message');
+  msg.textContent='Waiting for user...';msg.style.color='#8b949e';
+  document.getElementById('journey-history').innerHTML='<div style="color:#8b949e;font-size:12px">Start the journey to see history...</div>';
+  document.querySelectorAll('.step-box').forEach(s=>{s.classList.remove('active');s.classList.add('inactive');});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+name: ad-auction-efficiency-env
+version: "1.0.0"
+description: >
+  A real-world ad auction environment where an AI agent must learn
+  to show the right advertisement to the right user to maximize
+  click-through rate and revenue efficiency. Trained on real
+  Criteo industry benchmark data.
+
+author: Arsal
+task_type: sequential_decision_making
+domain: advertising_technology
+
+observation_space:
+  type: object
+  properties:
+    user_age:
+      type: float
+      range: [0.0, 1.0]
+      description: Normalized user age
+    user_tech_interest:
+      type: float
+      range: [0.0, 1.0]
+      description: User interest in technology products
+    user_shopping_interest:
+      type: float
+      range: [0.0, 1.0]
+      description: User interest in shopping
+    available_ads:
+      type: list
+      description: List of available ad types to show
+    current_budget:
+      type: float
+      description: Remaining ad budget
+    impressions_shown:
+      type: integer
+      description: Number of ads shown so far
+    current_ctr:
+      type: float
+      description: Current click through rate
+    step_number:
+      type: integer
+      description: Current step in episode
+    context:
+      type: string
+      description: Natural language description of user profile
+
+action_space:
+  type: object
+  properties:
+    selected_ad:
+      type: string
+      enum: [tech_ad, shopping_ad, general_ad]
+      description: Which ad to show the user
+    bid_amount:
+      type: float
+      range: [0.0, 100.0]
+      description: How much to bid for this impression
+    reasoning:
+      type: string
+      description: Optional explanation of decision
+
+reward:
+  type: float
+  range: [-1.0, 2.0]
+  description: >
+    Composite reward signal including click reward,
+    ad-user match efficiency, budget management,
+    and CTR improvement over time.
+
+tasks:
+  - id: easy
+    name: Tech User Ad Matching
+    description: >
+      Show ads to users who strongly prefer technology products.
+      The agent must consistently identify tech-loving users
+      and show them the tech ad to maximize clicks.
+    difficulty: easy
+    max_steps: 10
+    success_threshold: 0.7
+    grader: grade_easy
+
+  - id: medium
+    name: Mixed Audience Optimization
+    description: >
+      Handle users with mixed interests. The agent must balance
+      ad relevance with budget efficiency, choosing the right
+      ad while managing spend carefully.
+    difficulty: medium
+    max_steps: 10
+    success_threshold: 0.5
+    grader: grade_medium
+
+  - id: hard
+    name: Dynamic Budget Constrained Targeting
+    description: >
+      Optimize across diverse users with unpredictable preferences.
+      Agent must maximize CTR AND revenue while staying within
+      budget constraints. Genuinely challenges frontier models.
+    difficulty: hard
+    max_steps: 10
+    success_threshold: 0.4
+    grader: grade_hard
+
+episodes_per_task: 5
+baseline_scores:
+  easy: 0.85
+  medium: 0.55
+  hard: 0.65
+
+tags:
+  - advertising
+  - auction
+  - recommendation
+  - real-world
+  - openenv
+  - pytorch
+  - meta
