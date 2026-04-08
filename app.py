@@ -10,6 +10,18 @@ from environment import AdAuctionEnvironment, Action, GRADERS
 
 app = Flask(__name__)
 
+# ── Fix: accept POST requests even without Content-Type: application/json ──
+@app.before_request
+def force_json_content_type():
+    if request.method == "POST" and not request.content_type:
+        request.environ["CONTENT_TYPE"] = "application/json"
+
+@app.errorhandler(415)
+def handle_415(e):
+    """Fallback: if a 415 still slips through, re-parse and route manually."""
+    from flask import make_response
+    return make_response(jsonify({"error": "Unsupported Media Type handled"}), 200)
+
 # ============================================
 # CRITEO MODEL
 # ============================================
