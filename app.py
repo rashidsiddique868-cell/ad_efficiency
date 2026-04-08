@@ -1,4 +1,5 @@
 import os
+import json as _json
 from flask import Flask, render_template, jsonify, request
 import torch
 import torch.nn as nn
@@ -10,17 +11,17 @@ from environment import AdAuctionEnvironment, Action, GRADERS
 
 app = Flask(__name__)
 
-# ── Fix: accept POST requests even without Content-Type: application/json ──
-@app.before_request
-def force_json_content_type():
-    if request.method == "POST" and not request.content_type:
-        request.environ["CONTENT_TYPE"] = "application/json"
-
-@app.errorhandler(415)
-def handle_415(e):
-    """Fallback: if a 415 still slips through, re-parse and route manually."""
-    from flask import make_response
-    return make_response(jsonify({"error": "Unsupported Media Type handled"}), 200)
+def get_body_json():
+    """Parse JSON from request body regardless of Content-Type header.
+    Werkzeug 3.x enforces Content-Type before routes run, so we bypass
+    get_json() entirely and read raw bytes instead."""
+    try:
+        raw = request.get_data(force=True)
+        if raw:
+            return _json.loads(raw)
+    except Exception:
+        pass
+    return {}
 
 # ============================================
 # CRITEO MODEL
@@ -351,7 +352,7 @@ def roi():
 
 @app.route("/journey_step", methods=["POST"])
 def journey_step():
-    data    = request.get_json(force=True, silent=True) or {}
+    data    = get_body_json()
     history = data.get("history", [])
 
     age      = round(np.random.uniform(0.1, 0.9), 2)
