@@ -5,14 +5,20 @@ import random
 from typing import List, Optional
 from openai import OpenAI
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME   = os.getenv("MODEL_NAME",   "Qwen/Qwen2.5-72B-Instruct")
-API_KEY      = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY", "dummy")
+API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
+MODEL_NAME   = os.getenv("MODEL_NAME")   or "Qwen/Qwen2.5-72B-Instruct"
+API_KEY      = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY") or "dummy"
 BENCHMARK    = "AdAuctionEnv"
 MAX_STEPS    = 10
 SUCCESS_SCORE_THRESHOLD = 0.5
 
-client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+# Initialize client with robust error handling for the validator environment
+try:
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+except Exception as e:
+    print(f"[DEBUG] Client init error: {e}", file=sys.stderr, flush=True)
+    # Final fallback to standard OpenAI defaults if custom base_url fails
+    client = OpenAI(api_key=API_KEY if API_KEY != "dummy" else "missing-key")
 
 SYSTEM_PROMPT = """You are an expert digital advertising agent optimizing ad auctions.
 
