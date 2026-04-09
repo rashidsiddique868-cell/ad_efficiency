@@ -5,20 +5,25 @@ import random
 from typing import List, Optional
 from openai import OpenAI
 
-API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
-MODEL_NAME   = os.getenv("MODEL_NAME")   or "Qwen/Qwen2.5-72B-Instruct"
-API_KEY      = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY") or "dummy"
+# Robust API Configuration
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME   = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+API_KEY      = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
+
 BENCHMARK    = "AdAuctionEnv"
 MAX_STEPS    = 10
 SUCCESS_SCORE_THRESHOLD = 0.5
 
-# Initialize client with robust error handling for the validator environment
-try:
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-except Exception as e:
-    print(f"[DEBUG] Client init error: {e}", file=sys.stderr, flush=True)
-    # Final fallback to standard OpenAI defaults if custom base_url fails
-    client = OpenAI(api_key=API_KEY if API_KEY != "dummy" else "missing-key")
+# Initialize client with robust error handling
+client = None
+if API_KEY and API_KEY != "dummy":
+    try:
+        print(f"[INFO] Initializing OpenAI client with base_url: {API_BASE_URL}", flush=True)
+        client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    except Exception as e:
+        print(f"[DEBUG] Client init error: {e}", file=sys.stderr, flush=True)
+else:
+    print("[WARNING] No valid API_KEY found. Falling back to heuristic agent.", flush=True)
 
 SYSTEM_PROMPT = """You are an expert digital advertising agent optimizing ad auctions.
 
@@ -71,6 +76,21 @@ Campaign Status:
 
 Choose the best ad to show this user."""
 
+    # Heuristic agent fallback if client is not available or fails
+    def heuristic_action(obs):
+        tech     = obs.get("user_tech_interest", 0.5)
+        shopping = obs.get("user_shopping_interest", 0.5)
+        if tech > 0.6:
+            ad = "tech_ad"
+        elif shopping > 0.6:
+            ad = "shopping_ad"
+        else:
+            ad = "general_ad"
+        return {"selected_ad": ad, "bid_amount": 10.0, "reasoning": "heuristic fallback"}
+
+    if client is None:
+        return heuristic_action(obs)
+
     try:
         response = client.chat.completions.create(
             model=MODEL_NAME,
@@ -90,15 +110,7 @@ Choose the best ad to show this user."""
         }
     except Exception as e:
         print(f"[DEBUG] Model error: {e}", file=sys.stderr, flush=True)
-        tech     = obs.get("user_tech_interest", 0.5)
-        shopping = obs.get("user_shopping_interest", 0.5)
-        if tech > 0.6:
-            ad = "tech_ad"
-        elif shopping > 0.6:
-            ad = "shopping_ad"
-        else:
-            ad = "general_ad"
-        return {"selected_ad": ad, "bid_amount": 10.0, "reasoning": "fallback"}
+        return heuristic_action(obs)
 
 def run_task(task_level: str) -> dict:
     import urllib.request

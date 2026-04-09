@@ -14,6 +14,9 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[manifest]
+overrides = [{ name = "openai", specifier = ">=1.27.0" }]
+
 [[package]]
 name = "ad-auction-env"
 version = "1.0.0"

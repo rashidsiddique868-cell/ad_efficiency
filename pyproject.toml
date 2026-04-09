@@ -32,6 +32,11 @@ dependencies = [
     "openenv-core>=0.2.0",
 ]
 
+[tool.uv]
+override-dependencies = [
+    "openai>=1.27.0",
+]
+
 [project.scripts]
 server = "server.app:main"
 
