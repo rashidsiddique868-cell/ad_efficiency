@@ -223,16 +223,16 @@ class AdAuctionEnvironment:
 
 def grade_easy(env: AdAuctionEnvironment) -> float:
     if env.impressions_shown == 0:
-        return 0.0
+        return 0.001
     ctr          = env.clicks / env.impressions_shown
     correct_ads  = sum(1 for h in env.history if h["ad"] == "tech_ad")
     correct_rate = correct_ads / len(env.history) if env.history else 0
     score = (ctr * 0.5) + (correct_rate * 0.5)
-    return round(min(1.0, max(0.0, score)), 3)
+    return round(min(0.999, max(0.001, score)), 3)
 
 def grade_medium(env: AdAuctionEnvironment) -> float:
     if env.impressions_shown == 0:
-        return 0.0
+        return 0.001
     ctr            = env.clicks / env.impressions_shown
     budget_used    = (100 - env.budget) / 100
     efficiency     = ctr / max(budget_used, 0.01)
@@ -240,11 +240,11 @@ def grade_medium(env: AdAuctionEnvironment) -> float:
                         if h["ad"] == env._get_best_ad())
     correct_rate   = correct_ads / len(env.history) if env.history else 0
     score = (ctr * 0.4) + (correct_rate * 0.4) + (min(efficiency, 1.0) * 0.2)
-    return round(min(1.0, max(0.0, score)), 3)
+    return round(min(0.999, max(0.001, score)), 3)
 
 def grade_hard(env: AdAuctionEnvironment) -> float:
     if env.impressions_shown == 0:
-        return 0.0
+        return 0.001
     ctr          = env.clicks / env.impressions_shown
     budget_eff   = env.total_reward / max(env.impressions_shown, 1)
     correct_ads  = sum(1 for h in env.history
@@ -258,7 +258,7 @@ def grade_hard(env: AdAuctionEnvironment) -> float:
         norm_reward  * 0.2 +
         min(1.0, env.budget / 100) * 0.2
     )
-    return round(min(1.0, max(0.0, score)), 3)
+    return round(min(0.999, max(0.001, score)), 3)
 
 GRADERS = {
     "easy":   grade_easy,
